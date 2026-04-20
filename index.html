@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MYSGYM | Gestión Fitness Inteligente</title>
+    <meta name="description" content="Plataforma avanzada para la gestión de entrenamientos y nutrición. Conecta con tu base de datos externa para un control total.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Estilos -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <header class="glass-header">
+            <nav class="container">
+                <div class="logo">
+                    <span class="logo-text">MYS<span>GYM</span></span>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#dashboard" class="active">Panel</a></li>
+                    <li><a href="#rutinas">Rutinas</a></li>
+                    <li><a href="#usuarios">Usuarios</a></li>
+                    <li><a href="#configuracion">Ajustes</a></li>
+                </ul>
+                <div class="db-status">
+                    <span id="status-dot" class="dot-red"></span>
+                    <span id="status-text">Desconectado</span>
+                </div>
+            </nav>
+        </header>
+
+        <main class="container">
+            <section class="hero">
+                <div class="hero-content">
+                    <h1>Bienvenido al <span class="gradient-text">Futuro del Fitness</span></h1>
+                    <p>Conecta tu base de datos externa para comenzar a gestionar tus clientes y rutinas con una interfaz premium y fluida.</p>
+                    <div class="cta-group">
+                        <button id="btn-connect" class="btn-primary">Conectar DB</button>
+                        <button id="btn-docs" class="btn-secondary">Documentación</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="data-display" class="grid-dashboard">
+                <!-- Aquí se cargarán los datos de la DB externa -->
+                <div class="card skeleton">
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line short"></div>
+                </div>
+                <div class="card skeleton">
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line short"></div>
+                </div>
+                <div class="card skeleton">
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line short"></div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 MYSGYM - Sistema de Gestión Fitness Profesional</p>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
