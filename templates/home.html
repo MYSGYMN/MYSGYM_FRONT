@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}MYSGYM | Resumen{% endblock %}
+
+{% block body %}
+<section class="hero">
+    <div class="hero-wordmark">
+             MYSGYM
+    </div>
+    <div class="hero-bottom">
+        <div class="hero-img">
+            <div class="hero-img-label">Modelo relacional · MYSGYM</div>
+        </div>
+        <div class="hero-kpis">
+            <div class="hero-kpi">
+                <div class="kpi-label">Entidades</div>
+                    <div class="kpi-num">0</div>
+                    <div class="kpi-sub">tablas del diagrama</div>
+            </div>
+            <div class="hero-kpi">
+                <div class="kpi-label">Registros</div>
+                <div class="kpi-num">0</div>
+                <div class="kpi-sub up">{{ active_users }} usuarios activos</div>
+            </div>
+            <div class="hero-kpi">
+                <div class="kpi-label">Relaciones</div>
+                <div class="kpi-num">0</div>
+                <div class="kpi-sub">entidades con claves foraneas</div>
+            </div>
+            <div class="hero-kpi">
+                <div class="kpi-label">Pagos</div>
+                <div class="kpi-num">0<span class="kpi-unit">€</span></div>
+                <div class="kpi-sub dn">0 incidencias abiertas</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="diagram-board">
+    <div class="diagram-wire wire-user"></div>
+    <div class="diagram-wire wire-employee"></div>
+    <div class="diagram-wire wire-activity"></div>
+    <div class="diagram-wire wire-reservation"></div>
+    <div class="diagram-wire wire-material"></div>
+
+    {# Sections are provided by the backend API; client JS should render them.
+       Server-side rendering of `sections` is commented out while integrating
+       with the external API. #}
+</section>
+
+<section class="diagram-footer">
+    <div class="two-col">
+        <div class="col-block">
+            <div class="col-title">Registros recientes de pagos</div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Importe</th>
+                        <th>Metodo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                            {# Latest payments will be fetched from the API client-side #}
+                            <tr>
+                                <td colspan="4">Cargando pagos desde API...</td>
+                            </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-block">
+            <div class="col-title">Distribucion de registros por entidad</div>
+            {# Distribution data comes from API; client-side rendering expected #}
+            <div class="bar-row">
+                <span class="bar-name">Cargando...</span>
+                <div class="bar-track"><div class="bar-fill" style="width: 0;"></div></div>
+                <span class="bar-val">0</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="foot">
+    <span>MYSGYM</span>
+    <span>Diagrama implementado: usuarios, empleados, salas, horarios, actividades, reservas, material, incidencias y pagos</span>
+</footer>
+{% endblock %}

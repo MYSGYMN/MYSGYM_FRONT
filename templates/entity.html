@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}MYSGYM | {{ config.title }}{% endblock %}
+
+{% block body %}
+<section class="sec-head">
+    <div>
+        <div class="sec-count">{{ rows|length }} registros</div>
+        <div class="sec-title">{{ config.title }}</div>
+    </div>
+    <a class="btn-new" href="#formulario">{% if editing_record %}Editando registro{% else %}+ Nuevo registro{% endif %}</a>
+</section>
+
+<section class="entity-summary">
+    <div class="entity-summary-inner">
+        <span class="entity-summary-label">{{ config.accent }}</span>
+        <p>{{ config.description }}</p>
+    </div>
+</section>
+
+<section>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>{{ config.id_field }}</th>
+                    {% for field in config.fields %}
+                    <th>{{ field }}</th>
+                    {% endfor %}
+                    <th>acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# Rows are fetched from the backend API. Server-side rendering
+                   of `rows` is disabled while the frontend consumes the REST API.
+                   Client-side code should populate the table body dynamically. #}
+                <tr>
+                    <td colspan="{{ config.fields|length + 2 }}">Cargando registros desde API...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="two-col form-split" id="formulario">
+    <div class="col-block">
+        <div class="col-title">{{ config.accent }}</div>
+        <div class="form-copy-title">{% if editing_record %}Modificar registro{% else %}Nuevo registro{% endif %}</div>
+        <p class="form-copy-text">
+            {% if editing_record %}
+            Estas editando el registro {{ editing_record[config.id_field] }} de {{ config.title|lower }}.
+            {% else %}
+            Formulario para insertar datos en la entidad {{ config.title|lower }}.
+            {% endif %}
+        </p>
+    </div>
+    <div class="col-block">
+        <div class="col-title">Formulario</div>
+
+        <form
+            class="record-form"
+            action="{% if editing_record %}{{ url_for('update_record', entity=entity, record_id=editing_record[config.id_field]) }}{% else %}{{ url_for('add_record', entity=entity) }}{% endif %}"
+            method="post"
+        >
+                {% for field in config.fields %}
+            <label>
+                <span>{{ field }}</span>
+                {# Values are filled client-side when editing via the API #}
+                <input type="text" name="{{ field }}" value="" required>
+            </label>
+            {% endfor %}
+            <div class="form-actions">
+                <button type="submit" class="btn-new">
+                    {% if editing_record %}Guardar cambios{% else %}Guardar registro{% endif %}
+                </button>
+                {% if editing_record %}
+                <a class="btn-link" href="{{ url_for('entity_page', entity=entity) }}">Cancelar</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</section>
+
+<footer class="foot">
+    <span>{{ config.title }}</span>
+    <span>{{ rows|length }} total</span>
+</footer>
+{% endblock %}

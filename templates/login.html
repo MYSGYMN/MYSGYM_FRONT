@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}MYSGYM | Login{% endblock %}
+
+{% block body %}
+<div class="auth-center">
+    <div class="auth-card">
+        <h2>Acceso</h2>
+        <p>Introduce tus credenciales para acceder al panel de administración.</p>
+        <form id="login-form" class="record-form">
+            <label>
+                <span>Email</span>
+                <input type="email" name="email" required>
+            </label>
+            <label>
+                <span>Contraseña</span>
+                <input type="password" name="password" required>
+            </label>
+            <div class="form-actions">
+                <button type="submit" class="btn-new">Entrar</button>
+            </div>
+        </form>
+        <div id="login-error" class="form-error" style="display:none;color:#c00;margin-top:8px"></div>
+    </div>
+</div>
+
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const email = form.email.value.trim();
+    const password = form.password.value;
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'none';
+    try {
+        await ApiService.login(email, password);
+        window.location.href = '/dashboard';
+    } catch (err) {
+        errEl.textContent = err.message || 'Error al iniciar sesión';
+        errEl.style.display = 'block';
+    }
+});
+</script>
+
+{% endblock %}
