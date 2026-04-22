@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.getElementById('socios-table-body');
-    const employeePanel = document.getElementById('employee-panel');
-    const employeeTbody = document.getElementById('employee-table-body');
+    const clientPanel = document.getElementById('client-panel');
+    const clientTbody = document.getElementById('client-table-body');
     const modal = document.getElementById('modal');
     const modalForm = document.getElementById('modal-form');
     const modalTitle = document.getElementById('modal-title');
@@ -47,23 +47,26 @@ document.addEventListener('DOMContentLoaded', () => {
             // If role not present, try to fetch profile (optional)
         }
 
-        if (role && (role.toLowerCase() === 'empleado' || role.toLowerCase() === 'employee')) {
-            // show employee panel (read-only)
-            if (employeePanel) employeePanel.style.display = '';
+        // Si el role es 'client' mostramos el panel de cliente (solo lectura)
+        if (role && role.toLowerCase() === 'client') {
+            if (clientPanel) clientPanel.style.display = '';
             if (tbody) tbody.closest('section').style.display = 'none';
-            employeeTbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
+            // ocultar botón nuevo para clientes
+            if (btnNew) btnNew.style.display = 'none';
+            clientTbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
             try {
                 const items = await ApiService.get('usuarios');
-                renderEmployee(items);
+                renderClient(items);
             } catch (err) {
-                employeeTbody.innerHTML = `<tr><td colspan="4">${err.message}</td></tr>`;
+                clientTbody.innerHTML = `<tr><td colspan="4">${err.message}</td></tr>`;
             }
             return;
         }
 
-        // default: admin panel
-        if (employeePanel) employeePanel.style.display = 'none';
+        // default: admin panel (incluye admin y empleado)
+        if (clientPanel) clientPanel.style.display = 'none';
         if (tbody) tbody.closest('section').style.display = '';
+        if (btnNew) btnNew.style.display = '';
         tbody.innerHTML = '<tr><td colspan="7">Cargando...</td></tr>';
         try {
             const items = await ApiService.get('usuarios');
@@ -73,13 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderEmployee(items) {
+    function renderClient(items) {
         if (!items || items.length === 0) {
-            employeeTbody.innerHTML = '<tr><td colspan="4">No hay registros</td></tr>';
+            clientTbody.innerHTML = '<tr><td colspan="4">No hay registros</td></tr>';
             return;
         }
-        employeeTbody.innerHTML = '';
+        clientTbody.innerHTML = '';
         items.forEach((it) => {
+            // mostrar solo información básica para clientes
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${it.id_usuario ?? ''}</td>
@@ -87,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${it.email ?? ''}</td>
                 <td>${it.telefono ?? ''}</td>
             `;
-            employeeTbody.appendChild(tr);
+            clientTbody.appendChild(tr);
         });
     }
 
