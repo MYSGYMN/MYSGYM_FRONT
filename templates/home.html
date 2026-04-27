@@ -14,23 +14,23 @@
         <div class="hero-kpis">
             <div class="hero-kpi">
                 <div class="kpi-label">Entidades</div>
-                    <div class="kpi-num">0</div>
+                    <div class="kpi-num" id="home-kpi-entities">0</div>
                     <div class="kpi-sub">tablas del diagrama</div>
             </div>
             <div class="hero-kpi">
                 <div class="kpi-label">Registros</div>
-                <div class="kpi-num">0</div>
-                <div class="kpi-sub up">{{ active_users }} usuarios activos</div>
+                <div class="kpi-num" id="home-kpi-records">0</div>
+                <div class="kpi-sub up" id="home-kpi-users">{{ active_users }} usuarios activos</div>
             </div>
             <div class="hero-kpi">
                 <div class="kpi-label">Relaciones</div>
-                <div class="kpi-num">0</div>
+                <div class="kpi-num" id="home-kpi-relations">0</div>
                 <div class="kpi-sub">entidades con claves foraneas</div>
             </div>
             <div class="hero-kpi">
                 <div class="kpi-label">Pagos</div>
-                <div class="kpi-num">0<span class="kpi-unit">€</span></div>
-                <div class="kpi-sub dn">0 incidencias abiertas</div>
+                <div class="kpi-num" id="home-kpi-revenue">0<span class="kpi-unit">€</span></div>
+                <div class="kpi-sub dn" id="home-kpi-issues">0 incidencias abiertas</div>
             </div>
         </div>
     </div>
@@ -61,21 +61,21 @@
                         <th>Metodo</th>
                     </tr>
                 </thead>
-                <tbody>
-                            {# Latest payments will be fetched from the API client-side #}
-                            <tr>
-                                <td colspan="4">Cargando pagos desde API...</td>
-                            </tr>
+                <tbody id="home-payments-body">
+                    <tr>
+                        <td colspan="4">Cargando pagos desde API...</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
         <div class="col-block">
             <div class="col-title">Distribucion de registros por entidad</div>
-            {# Distribution data comes from API; client-side rendering expected #}
-            <div class="bar-row">
-                <span class="bar-name">Cargando...</span>
-                <div class="bar-track"><div class="bar-fill" style="width: 0;"></div></div>
-                <span class="bar-val">0</span>
+            <div id="home-distribution">
+                <div class="bar-row">
+                    <span class="bar-name">Cargando...</span>
+                    <div class="bar-track"><div class="bar-fill" style="width: 0;"></div></div>
+                    <span class="bar-val">0</span>
+                </div>
             </div>
         </div>
     </div>
@@ -85,4 +85,5 @@
     <span>MYSGYM</span>
     <span>Diagrama implementado: usuarios, empleados, salas, horarios, actividades, reservas, material, incidencias y pagos</span>
 </footer>
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
 {% endblock %}

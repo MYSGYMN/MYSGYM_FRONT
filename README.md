@@ -1,86 +1,109 @@
-# MYSGYM — Frontend (Flask + Jinja)
+# MYSGYM Frontend
 
-Este repositorio contiene el frontend de MYSGYM. Es una aplicación Flask que sirve plantillas Jinja y recursos estáticos. Los datos se obtienen desde un backend REST separado (no incluido aquí). Este README describe lo que hay implementado y cómo dejar el backend listo para conectar con el frontend.
+Frontend Flask/Jinja para MYSGYM. Este proyecto sirve la interfaz web y se comunica con el backend REST via CORS.
 
-Última actualización: 21 de abril de 2026
+## Resumen
 
-## Qué hay implementado (estado actual)
+- Servidor Flask para páginas HTML.
+- Plantillas Jinja para `home`, `login`, `dashboard` y vistas de entidad.
+- Cliente API en navegador que llama directamente al backend (CORS).
+- Autenticación con JWT guardado en `localStorage`.
+- Soporte para roles `cliente`, `admin` y `monitor`.
 
-- El frontend sirve páginas con Flask (`app.py`) y plantillas en `templates/`.
-- Servicio JavaScript para consumir la API: `static/js/api.js` (soporte JWT, manejo de errores, `login()`/`logout()`).
-- Archivo de configuración: `static/js/config.js` — define `API_BASE_URL` (por defecto `http://localhost:5000`).
-- Plantillas preparadas para carga cliente-side: `templates/home.html` y `templates/entity.html` contienen marcadores/placeholder; el cliente debe rellenarlos llamando a la API.
-- Documento de integración: `docs/integration.md` con instrucciones detalladas y ejemplo de backend.
+## Qué incluye
 
-# MYSGYM — Frontend (Flask + Jinja)
+- [`app.py`](app.py): aplicación Flask principal, rutas y configuración.
+- [`templates/base.html`](templates/base.html): layout común, navegación y lógica de permisos.
+- [`templates/home.html`](templates/home.html): pantalla de resumen.
+- [`templates/login.html`](templates/login.html): formulario de acceso.
+- [`templates/dashboard.html`](templates/dashboard.html): panel de socios.
+- [`templates/entity.html`](templates/entity.html): vista genérica para entidades.
+- [`static/js/api.js`](static/js/api.js): cliente API con manejo de token, login y errores.
+- [`static/js/config.js`](static/js/config.js): configuración de URLs.
+- [`static/js/dashboard.js`](static/js/dashboard.js): lógica del panel de socios.
+- [`static/js/entities.js`](static/js/entities.js): lógica CRUD de entidades.
+- [`static/js/main.js`](static/js/main.js): utilidades generales de UI.
+- [`static/css/styles.css`](static/css/styles.css): estilos globales.
 
-Este repositorio contiene el frontend de MYSGYM: una aplicación Flask que sirve plantillas Jinja y recursos estáticos. El repositorio está centrado en la interfaz y la experiencia cliente; no incluye un backend de datos completo.
+## Arquitectura
 
-Última actualización: 21 de abril de 2026
+```
+Frontend:8080  ──────────────▶  Backend:8000
+  HTML/JS        CORS         REST API
+```
 
-## Qué incluye este frontend
+El frontend llama directamente al backend desde el navegador viaHTTPCORS.
 
-- `app.py`: servidor Flask que sirve plantillas y recursos estáticos.
-- Plantillas Jinja en `templates/`: `base.html`, `home.html`, `entity.html`.
-- Estilos en `static/css/styles.css`.
-- Lógica cliente en `static/js/`:
-	- `config.js`: define `API_BASE_URL` (valor por defecto `http://localhost:5000`).
-	- `api.js`: `ApiService` preparado para trabajar con JWT (almacena token en `localStorage`, añade `Authorization` en peticiones, maneja errores).
-	- `main.js`: comportamientos UI básicos (navegación, toasts, recarga).
-- `docs/integration.md`: documento con contexto e instrucciones avanzadas (opcional).
+## Rutas del frontend
 
-## Estructura del proyecto
+- `/`: resumen principal.
+- `/login`: pantalla de acceso.
+- `/dashboard`: listado de socios.
+- `/seccion/<entity>`: vista de entidad.
+
+Entidades:
+
+- `usuarios`
+- `empleados`
+- `salas`
+- `horarios`
+- `actividades`
+- `reservas`
+- `material`
+- `incidencias`
+- `pagos`
+
+## Variables de entorno
+
+- `FRONTEND_API_BASE_URL`
+  - Valor por defecto: `http://localhost:8000`
+  - URL del backend al que el navegador conecta directamente.
+
+## Permisos en la UI
+
+- `cliente`:
+  - Perfil, Mis reservas, Mis pagos
+  - acceso bloqueado a Resumen y Dashboard
+- `admin`:
+  - acceso completo a todas las entidades
+- `monitor`:
+  - acceso limitado similar a admin
+
+## Requisitos
+
+- Python 3.11+
+- Flask
+- Backend corriendo en `http://localhost:8000`
+
+## Cómo ejecutar
+
+1. Backend (terminal 1):
+```bash
+cd Backend_MYSGYM
+source .venv/bin/activate
+python run.py
+```
+
+2. Frontend (terminal 2):
+```bash
+cd MYSGYM_FRONT
+source venv/bin/activate
+python app.py
+```
+
+3. Navegador:
+```
+http://localhost:8080
+```
+
+## Estructura
 
 ```
 MYSGYM_FRONT/
 ├── app.py
-├── templates/
+├── README.md
 ├── static/
-│   ├── css/styles.css
+│   ├── css/
 │   └── js/
-│       ├── config.js
-│       ├── api.js
-│       └── main.js
-├── docs/
-└── README.md
+└── templates/
 ```
-
-## Cómo ejecutar el frontend localmente
-
-1. Crear y activar un entorno virtual (recomendado):
-
-```bash
-python -m venv venv
-source venv/bin/activate
-```
-
-2. Instalar la dependencia necesaria:
-
-```bash
-pip install flask
-```
-
-3. Ejecutar la aplicación (por defecto sirve en el puerto 8080):
-
-```bash
-python app.py
-# o: FLASK_APP=app.py flask run --port 8080
-```
-
-4. Abrir en el navegador: `http://localhost:8080`
-
-## Notas sobre datos y API
-
-- Las plantillas `home.html` y `entity.html` están preparadas para que los datos sean cargados por el cliente mediante llamadas a una API REST. Actualmente el servidor frontend devuelve placeholders para evitar errores si no hay API disponible.
-- `static/js/config.js` contiene la variable `API_BASE_URL` para que el cliente sepa a qué backend llamar.
-
-## Siguientes pasos posibles (opcional)
-
-- Implementar `static/js/home.js` y `static/js/entity.js` para poblar la UI desde `ApiService`.
-- Añadir una página de login y el flujo de autenticación usando `ApiService.login()`.
-
-Si quieres que implemente cualquiera de estos pasos, dímelo y lo desarrollo.
-
----
-Front-end preparado y organizado para integracion.
-
