@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Decide qué panel mostrar según el role
         const role = ApiService.getRole();
         if (!role) {
-            // If role not present, try to fetch profile (optional)
+            // Si no hay `role`, intentar obtener el perfil (opcional)
         }
 
         // Si el role es 'client' mostramos el panel de cliente (solo lectura)

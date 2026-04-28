@@ -1,51 +1,41 @@
 # MYSGYM — Frontend (Flask + Jinja)
 
-Este repositorio contiene el frontend de MYSGYM. Es una aplicación Flask que sirve plantillas Jinja y recursos estáticos. Los datos se obtienen desde un backend REST separado (no incluido aquí). Este README describe lo que hay implementado y cómo dejar el backend listo para conectar con el frontend.
+Frontend ligero para la aplicación MYSGYM: una interfaz basada en Flask que sirve plantillas Jinja y recursos estáticos (CSS/JS). Está pensado como capa de presentación que puede trabajar con un backend REST separado o usar el modo mock-interno para desarrollo.
 
-Última actualización: 21 de abril de 2026
+Última actualización: 28 de abril de 2026
 
-## Qué hay implementado (estado actual)
+## Propósito
 
-- El frontend sirve páginas con Flask (`app.py`) y plantillas en `templates/`.
-- Servicio JavaScript para consumir la API: `static/js/api.js` (soporte JWT, manejo de errores, `login()`/`logout()`).
-- Archivo de configuración: `static/js/config.js` — define `API_BASE_URL` (por defecto `http://localhost:5000`).
-- Plantillas preparadas para carga cliente-side: `templates/home.html` y `templates/entity.html` contienen marcadores/placeholder; el cliente debe rellenarlos llamando a la API.
-- Documento de integración: `docs/integration.md` con instrucciones detalladas y ejemplo de backend.
+Proveer una interfaz web para gestionar entidades del gimnasio (usuarios, empleados, salas, actividades, reservas, material, incidencias y pagos). Incluye:
 
-# MYSGYM — Frontend (Flask + Jinja)
+- Plantillas HTML con estructura base y zonas donde el cliente JS carga datos.
+- Servicios JavaScript para consumir una API (con soporte a JWT y modo mock para pruebas locales).
+- Un servidor Flask mínimo que sirve las plantillas y proporciona endpoints de prueba (dev) cuando se necesita.
 
-Este repositorio contiene el frontend de MYSGYM: una aplicación Flask que sirve plantillas Jinja y recursos estáticos. El repositorio está centrado en la interfaz y la experiencia cliente; no incluye un backend de datos completo.
+## Tecnologías principales
 
-Última actualización: 21 de abril de 2026
+- Python + Flask (servidor que sirve las plantillas y algunos endpoints de prueba).
+- HTML + Jinja2 (plantillas en `templates/`).
+- JavaScript (cliente en `static/js/`): `ApiService` (peticiones, autenticación), `dashboard.js` (lógica de listado/CRUD de ejemplo), `main.js` (comportamientos UI).
+- CSS en `static/css/styles.css`.
 
-## Qué incluye este frontend
-
-- `app.py`: servidor Flask que sirve plantillas y recursos estáticos.
-- Plantillas Jinja en `templates/`: `base.html`, `home.html`, `entity.html`.
-- Estilos en `static/css/styles.css`.
-- Lógica cliente en `static/js/`:
-	- `config.js`: define `API_BASE_URL` (valor por defecto `http://localhost:5000`).
-	- `api.js`: `ApiService` preparado para trabajar con JWT (almacena token en `localStorage`, añade `Authorization` en peticiones, maneja errores).
-	- `main.js`: comportamientos UI básicos (navegación, toasts, recarga).
-- `docs/integration.md`: documento con contexto e instrucciones avanzadas (opcional).
-
-## Estructura del proyecto
+## Estructura principal
 
 ```
 MYSGYM_FRONT/
-├── app.py
-├── templates/
+├── app.py                 # Servidor Flask (dev)
+├── templates/             # Plantillas Jinja: base.html, home.html, dashboard.html, entity.html, login.html
 ├── static/
 │   ├── css/styles.css
 │   └── js/
-│       ├── config.js
-│       ├── api.js
-│       └── main.js
-├── docs/
+│       ├── config.js     # API_BASE_URL, USE_MOCK_API
+│       ├── api.js        # ApiService (mock + fetch, JWT storage)
+│       ├── dashboard.js  # Lógica de listado/CRUD de ejemplo
+│       └── main.js       # Comportamientos UI comunes
 └── README.md
 ```
 
-## Cómo ejecutar el frontend localmente
+## Cómo ejecutar (desarrollo)
 
 1. Crear y activar un entorno virtual (recomendado):
 
@@ -54,33 +44,59 @@ python -m venv venv
 source venv/bin/activate
 ```
 
-2. Instalar la dependencia necesaria:
+2. Instalar Flask:
 
 ```bash
 pip install flask
 ```
 
-3. Ejecutar la aplicación (por defecto sirve en el puerto 8080):
+3. Ejecutar la aplicación de desarrollo (sirve en el puerto 8080 por defecto):
 
 ```bash
 python app.py
-# o: FLASK_APP=app.py flask run --port 8080
 ```
 
-4. Abrir en el navegador: `http://localhost:8080`
+4. Abrir en el navegador: http://localhost:8080
 
-## Notas sobre datos y API
+## Configuración importante
 
-- Las plantillas `home.html` y `entity.html` están preparadas para que los datos sean cargados por el cliente mediante llamadas a una API REST. Actualmente el servidor frontend devuelve placeholders para evitar errores si no hay API disponible.
-- `static/js/config.js` contiene la variable `API_BASE_URL` para que el cliente sepa a qué backend llamar.
+- `static/js/config.js`:
+	- `API_BASE_URL`: URL base del backend. Por defecto `http://localhost:8080` (el mismo servidor Flask de este proyecto).
+	- `USE_MOCK_API`: si `true`, `ApiService` usa un mock en memoria para pruebas sin backend; poner `false` para realizar peticiones reales al `API_BASE_URL`.
 
-## Siguientes pasos posibles (opcional)
+## Endpoints útiles (frontend + dev API)
 
-- Implementar `static/js/home.js` y `static/js/entity.js` para poblar la UI desde `ApiService`.
-- Añadir una página de login y el flujo de autenticación usando `ApiService.login()`.
+- Páginas:
+	- `/` → `home` (plantilla `home.html`)
+	- `/dashboard` → panel principal (`dashboard.html`)
+	- `/login` → formulario de acceso (`login.html`)
+	- `/seccion/<entity>` → vista genérica por entidad (`entity.html`)
 
-Si quieres que implemente cualquiera de estos pasos, dímelo y lo desarrollo.
+- API de prueba (dev):
+	- `POST /api/auth/login` → autenticación de desarrollo (dev tokens)
+	- `GET/POST /api/usuarios` y `GET/PUT/DELETE /api/usuarios/<id>` → ejemplo CRUD para `usuarios`
 
----
-Front-end preparado y organizado para integracion.
+El servidor `app.py` incluye una base de datos en memoria y endpoints simples para facilitar pruebas locales.
+
+## Credenciales de prueba
+
+- Usuario admin de ejemplo: `admin` / `admin` (dev)
+- Usuario empleado de ejemplo: `empleado` / `empleado` (dev)
+
+Además, cuando `USE_MOCK_API=true` el cliente contiene usuarios demo en memoria (ver `static/js/api.js`).
+
+## Uso básico del frontend
+
+1. Si quieres usar el backend incluido para pruebas: mantener `API_BASE_URL` en `http://localhost:8080` y `USE_MOCK_API=false`.
+2. Abrir `/login`, iniciar sesión con credenciales de prueba.
+3. Navegar al `/dashboard` para listar y gestionar usuarios (CRUD de ejemplo).
+4. Para cambiar a un backend externo, actualizar `static/js/config.js` con la URL del API y poner `USE_MOCK_API = false`.
+
+## Notas y siguientes pasos sugeridos
+
+- Separar el backend real si se requiere persistencia en base de datos.
+- Extender `ApiService` con manejo de refresh tokens y control de errores más robusto.
+- Añadir tests E2E y scripts de despliegue cuando el backend esté disponible.
+
+
 

@@ -267,8 +267,9 @@ def entity_page(entity):
         return redirect(url_for("home"))
 
     config = SCHEMA[entity]
-    # When using an external API, the entity rows and edit target are
-    # fetched client-side. Return only the `config` metadata here.
+    # Cuando se use una API externa, las filas de la entidad y el objetivo de
+    # edición se obtienen desde el cliente. Devolver solo la metadata `config`
+    # aquí.
     return render_template(
         "entity.html",
         entity=entity,
@@ -325,7 +326,7 @@ if __name__ == "__main__":
     app.run(port=8080, debug=True)
 
 
-### --- Simple test API endpoints (dev only) ---------------------------------
+### --- Endpoints de prueba simples (solo desarrollo) -------------------------
 
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -334,7 +335,7 @@ def api_auth_login():
     email = (data.get('email') or '').strip()
     password = (data.get('password') or '')
 
-    # Short-circuit test credentials
+    # Credenciales de prueba rápidas
     if email == 'admin' and password == 'admin':
         resp = jsonify({'access_token': 'demo-admin-token', 'role': 'admin'})
         resp.headers['Access-Control-Allow-Origin'] = '*'
@@ -345,7 +346,7 @@ def api_auth_login():
         resp.headers['Access-Control-Allow-Origin'] = '*'
         return resp
 
-    # Try to match a user in in-memory DATABASE
+    # Intentar hacer coincidir un usuario en la base de datos en memoria
     for u in DATABASE.get('usuarios', []):
         if str(u.get('email')) == email and str(u.get('password')) == password:
             role = 'admin' if int(u.get('id_usuario', 0)) == 1 else 'empleado'
