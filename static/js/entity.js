@@ -97,6 +97,42 @@ document.addEventListener('DOMContentLoaded', () => {
             fields.forEach((field) => appendValueCell(tr, field, row[field]));
 
             if (!isStaff) {
+                if (entity === 'actividades') {
+                    const actions = document.createElement('td');
+                    const bookBtn = document.createElement('button');
+                    bookBtn.className = 'btn-link';
+                    bookBtn.textContent = 'Apuntarse';
+                    bookBtn.addEventListener('click', async () => {
+                        try {
+                            await ApiService.create('reservas', { actividad_id: row[idField] });
+                            alert('Te has apuntado con éxito');
+                        } catch (err) {
+                            alert(err.message || 'Error al apuntarse');
+                        }
+                    });
+                    actions.appendChild(bookBtn);
+                    tr.appendChild(actions);
+                } else if (entity === 'reservas') {
+                    const actions = document.createElement('td');
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.className = 'btn-link danger';
+                    cancelBtn.textContent = 'Cancelar';
+                    cancelBtn.addEventListener('click', async () => {
+                        if (!confirm('¿Seguro que quieres cancelar tu reserva?')) return;
+                        try {
+                            await ApiService.delete('reservas', row[idField]);
+                            await load();
+                            alert('Reserva cancelada');
+                        } catch (err) {
+                            alert(err.message || 'Error al cancelar');
+                        }
+                    });
+                    actions.appendChild(cancelBtn);
+                    tr.appendChild(actions);
+                } else {
+                    const emptyAction = document.createElement('td');
+                    tr.appendChild(emptyAction);
+                }
                 tbody.appendChild(tr);
                 return;
             }
