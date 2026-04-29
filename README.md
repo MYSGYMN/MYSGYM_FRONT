@@ -1,4 +1,4 @@
-# MYSGYM — Frontend (Flask + Jinja)
+# MYSGYM Frontend
 
 Frontend ligero para la aplicación MYSGYM: una interfaz basada en Flask que sirve plantillas Jinja y recursos estáticos (CSS/JS). Está pensado como capa de presentación que puede trabajar con un backend REST separado o usar el modo mock-interno para desarrollo.
 
@@ -26,7 +26,7 @@ MYSGYM_FRONT/
 ├── app.py                 # Servidor Flask (dev)
 ├── templates/             # Plantillas Jinja: base.html, home.html, dashboard.html, entity.html, login.html
 ├── static/
-│   ├── css/styles.css
+│   ├── css/
 │   └── js/
 │       ├── config.js     # API_BASE_URL, USE_MOCK_API
 │       ├── api.js        # ApiService (mock + fetch, JWT storage)

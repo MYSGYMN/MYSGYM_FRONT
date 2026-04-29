@@ -607,6 +607,13 @@ input {
     gap: 14px;
 }
 
+.entity-fields {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
 .record-form label {
     display: grid;
     gap: 8px;
@@ -729,6 +736,10 @@ input {
     .record-form {
         grid-template-columns: 1fr;
     }
+
+    .entity-fields {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Login centered card */
@@ -768,4 +779,3 @@ input {
 .auth-card .form-actions {
     justify-content: flex-end;
 }
-
