@@ -21,7 +21,7 @@
         <nav class="topbar-nav">
             <a class="{% if active_page == 'home' %}active{% endif %}" href="{{ url_for('home') }}">Resumen</a>
             {% for item in nav_items %}
-                <a class="{% if active_page == item.key %}active{% endif %}" href="{{ item.url }}">{{ item.title }}</a>
+                <a class="{% if active_page == item.key %}active{% endif %}" href="{{ item.url }}" data-nav-entity="{{ item.key }}">{{ item.title }}</a>
                 {% endfor %}
                 <a id="auth-link" href="/login">Login</a>
         </nav>
@@ -86,6 +86,15 @@
             navLinks.forEach((link) => {
                 const linkPath = new URL(link.href, window.location.origin).pathname;
                 if (linkPath === '/') {
+                    link.style.display = 'none';
+                }
+            });
+        }
+
+        if (token && ApiService.isClient && ApiService.isClient()) {
+            const clientVisibleEntities = new Set(['actividades', 'salas', 'horarios', 'material']);
+            document.querySelectorAll('[data-nav-entity]').forEach((link) => {
+                if (!clientVisibleEntities.has(link.dataset.navEntity)) {
                     link.style.display = 'none';
                 }
             });

@@ -607,13 +607,6 @@ input {
     gap: 14px;
 }
 
-.entity-fields {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-}
-
 .record-form label {
     display: grid;
     gap: 8px;
@@ -736,10 +729,6 @@ input {
     .record-form {
         grid-template-columns: 1fr;
     }
-
-    .entity-fields {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* Login centered card */
@@ -761,6 +750,37 @@ input {
     border: 1px solid var(--border);
 }
 
+.auth-tabs {
+    display: inline-flex;
+    border: 1px solid var(--ink);
+    margin-bottom: 22px;
+}
+
+.auth-tab {
+    min-width: 104px;
+    min-height: 34px;
+    padding: 8px 14px;
+    border: 0;
+    border-right: 1px solid var(--ink);
+    background: transparent;
+    cursor: pointer;
+    font-family: var(--font-disp);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink);
+}
+
+.auth-tab:last-child {
+    border-right: 0;
+}
+
+.auth-tab.active {
+    background: var(--ink);
+    color: var(--cream);
+}
+
 .auth-card h2 {
     margin: 0 0 12px 0;
     font-family: var(--font-disp);
@@ -778,4 +798,13 @@ input {
 
 .auth-card .form-actions {
     justify-content: flex-end;
+}
+
+.form-error {
+    margin-top: 14px;
+    color: var(--red);
+}
+
+.form-error.success {
+    color: var(--green);
 }

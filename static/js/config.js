@@ -1,11 +1,8 @@
-const runtimeConfig = window.MYSGYM_CONFIG || {};
+// Configuración del frontend: URL base de la API.
+// El frontend Flask sirve las páginas y el backend separado responde a las rutas REST.
+const API_BASE_URL = `http://${window.location.hostname}:8000`;
 
-function trimTrailingSlashes(value) {
-    return String(value || '').replace(/\/+$/, '');
-}
-
-// El frontend llama directamente al backend via CORS
-// Configura FRONTEND_API_BASE_URL en el .env para apuntar al backend
-const API_BASE_URL = trimTrailingSlashes(runtimeConfig.apiBaseUrl);
-const API_PREFIX = '';
+// Modo de desarrollo: si está activado, las llamadas a la API se simulan
+// en el frontend con datos en memoria para poder hacer ensayos sin backend.
+// Cambia a `false` para usar el backend real.
 const USE_MOCK_API = false;

@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+ENV/
+
+# Flask / variables locales
+.env
+.env.*
+instance/
+*.log
+
+# Editores y sistema operativo
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db

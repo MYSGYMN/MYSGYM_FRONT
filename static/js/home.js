@@ -1,158 +1,126 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const role = String(ApiService.getRole() || '').toLowerCase();
-    const isStaff = role === 'admin' || role === 'monitor';
+document.addEventListener('DOMContentLoaded', async () => {
+    const schema = window.MYSGYM_SCHEMA || {};
+    const sections = window.MYSGYM_SECTIONS || [];
+    const state = {};
 
-    const kpiEntities = document.getElementById('home-kpi-entities');
-    const kpiRecords = document.getElementById('home-kpi-records');
-    const kpiUsers = document.getElementById('home-kpi-users');
-    const kpiRelations = document.getElementById('home-kpi-relations');
-    const kpiRevenue = document.getElementById('home-kpi-revenue');
-    const kpiIssues = document.getElementById('home-kpi-issues');
-    const paymentsBody = document.getElementById('home-payments-body');
-    const distribution = document.getElementById('home-distribution');
-
-    const sections = [
-        { key: 'usuarios', label: 'Usuarios', loader: () => (isStaff ? ApiService.listUsuarios() : ApiService.getPerfil()) },
-        { key: 'empleados', label: 'Empleados', loader: () => (isStaff ? ApiService.listEmpleados() : []) },
-        { key: 'salas', label: 'Salas', loader: () => ApiService.listSalas() },
-        { key: 'horarios', label: 'Horarios', loader: () => ApiService.listHorarios() },
-        { key: 'actividades', label: 'Actividades', loader: () => ApiService.listActividades() },
-        { key: 'reservas', label: 'Reservas', loader: () => (isStaff ? ApiService.listReservas() : ApiService.listMisReservas()) },
-        { key: 'material', label: 'Material', loader: () => (isStaff ? ApiService.listMateriales() : []) },
-        { key: 'incidencias', label: 'Incidencias', loader: () => (isStaff ? ApiService.listIncidencias() : []) },
-        { key: 'pagos', label: 'Pagos', loader: () => (isStaff ? ApiService.listPagos() : ApiService.listHistorialPagos()) },
-    ];
-
-    const fetchers = sections.map(async (section) => {
-        try {
-            const data = await section.loader();
-            return { ...section, data: normalizeArray(data) };
-        } catch (error) {
-            return { ...section, data: [], error };
-        }
-    });
-
-    Promise.all(fetchers).then((results) => {
-        const counts = Object.fromEntries(results.map((result) => [result.key, result.data.length]));
-        const totalRecords = Object.values(counts).reduce((sum, value) => sum + value, 0);
-        const totalUsers = results.find((result) => result.key === 'usuarios');
-        const payments = results.find((result) => result.key === 'pagos')?.data || [];
-        const reservations = results.find((result) => result.key === 'reservas')?.data || [];
-        const activities = results.find((result) => result.key === 'actividades')?.data || [];
-        const issues = results.find((result) => result.key === 'incidencias')?.data || [];
-        const materials = results.find((result) => result.key === 'material')?.data || [];
-
-        if (kpiEntities) kpiEntities.textContent = String(sections.length);
-        if (kpiRecords) kpiRecords.textContent = String(totalRecords);
-        if (kpiRelations) {
-            kpiRelations.textContent = String(activities.length + reservations.length + payments.length + materials.length + issues.length);
-        }
-
-        if (kpiUsers) {
-            if (isStaff) {
-                const activeUsers = (totalUsers?.data || []).filter((user) => normalizeStatus(user.estado) === 'activo').length;
-                kpiUsers.textContent = `${activeUsers} usuario${activeUsers === 1 ? '' : 's'} activo${activeUsers === 1 ? '' : 's'}`;
-            } else {
-                const perfil = totalUsers?.data?.[0] || null;
-                const active = perfil && normalizeStatus(perfil.estado) === 'activo' ? 1 : 0;
-                kpiUsers.textContent = `${active} usuario${active === 1 ? '' : 's'} activo${active === 1 ? '' : 's'}`;
-            }
-        }
-
-        const totalRevenue = payments.reduce((sum, payment) => sum + Number(payment.monto || 0), 0);
-        if (kpiRevenue) kpiRevenue.innerHTML = `${totalRevenue.toFixed(2)}<span class="kpi-unit">€</span>`;
-
-        const openIssues = issues.filter((issue) => normalizeStatus(issue.estado) === 'pendiente').length;
-        if (kpiIssues) {
-            kpiIssues.textContent = `${openIssues} incidencia${openIssues === 1 ? '' : 's'} abierta${openIssues === 1 ? '' : 's'}`;
-        }
-
-        renderPayments(payments);
-        renderDistribution(results);
-    });
-
-    function renderPayments(payments) {
-        if (!paymentsBody) return;
-
-        const sorted = [...payments]
-            .sort((a, b) => new Date(b.fecha || 0).getTime() - new Date(a.fecha || 0).getTime())
-            .slice(0, 5);
-
-        if (!sorted.length) {
-            paymentsBody.innerHTML = '<tr><td colspan="4">No hay pagos registrados.</td></tr>';
-            return;
-        }
-
-        paymentsBody.innerHTML = '';
-        sorted.forEach((payment) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${escapeHtml(payment.id_pago ?? '')}</td>
-                <td>${escapeHtml(payment.usuario ?? payment.usuario_nombre ?? '—')}</td>
-                <td>${escapeHtml(formatMoney(payment.monto ?? 0))}</td>
-                <td>${escapeHtml(payment.metodo ?? payment.metodo_pago ?? '—')}</td>
-            `;
-            paymentsBody.appendChild(tr);
-        });
-    }
-
-    function renderDistribution(results) {
-        if (!distribution) return;
-
-        const rows = results
-            .map((result) => ({ label: result.label, count: result.data.length }))
-            .filter((row) => row.count > 0)
-            .sort((a, b) => b.count - a.count);
-
-        if (!rows.length) {
-            distribution.innerHTML = '<div class="bar-row"><span class="bar-name">Sin datos</span><div class="bar-track"><div class="bar-fill" style="width: 0;"></div></div><span class="bar-val">0</span></div>';
-            return;
-        }
-
-        const max = Math.max(...rows.map((row) => row.count));
-        distribution.innerHTML = rows
-            .map((row) => {
-                const width = Math.max(8, Math.round((row.count / max) * 100));
-                return `
-                    <div class="bar-row">
-                        <span class="bar-name">${escapeHtml(row.label)}</span>
-                        <div class="bar-track"><div class="bar-fill" style="width: ${width}%"></div></div>
-                        <span class="bar-val">${row.count}</span>
-                    </div>
-                `;
-            })
-            .join('');
-    }
-
-    function normalizeArray(data) {
-        if (Array.isArray(data)) return data;
-        if (data && typeof data === 'object') return [data];
+    function normalizeList(response) {
+        if (Array.isArray(response)) return response;
+        if (response && Array.isArray(response.data)) return response.data;
+        if (response && Array.isArray(response.results)) return response.results;
         return [];
     }
 
-    function normalizeStatus(value) {
-        const normalized = String(value || '').toLowerCase();
-        if (['activo', 'activa', 'confirmada', 'completado', 'completada', 'cobrado', 'operativo'].includes(normalized)) {
-            return 'activo';
-        }
-        if (['pendiente', 'revision', 'en espera', 'abierto', 'abierta'].includes(normalized)) {
-            return 'pendiente';
-        }
-        return 'inactivo';
+    function statusClass(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        const mapping = {
+            activa: 'activo',
+            activo: 'activo',
+            confirmada: 'activo',
+            operativo: 'activo',
+            cobrado: 'cobrado',
+            pendiente: 'pendiente',
+            'en espera': 'pendiente',
+            'en proceso': 'pendiente',
+            revision: 'pendiente',
+            abierta: 'inactivo',
+            inactiva: 'inactivo',
+            inactivo: 'inactivo',
+        };
+        return mapping[normalized] || 'pendiente';
     }
 
-    function formatMoney(value) {
-        const number = Number(value);
-        if (Number.isNaN(number)) return String(value);
-        return `${number.toFixed(2)} €`;
+    function setText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
     }
 
-    function escapeHtml(value) {
-        return String(value)
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#39;');
+    function renderPayments(payments) {
+        const tbody = document.getElementById('latest-payments-body');
+        if (!tbody) return;
+
+        const latest = [...payments]
+            .sort((a, b) => String(b.fecha_pago || '').localeCompare(String(a.fecha_pago || '')))
+            .slice(0, 5);
+
+        if (!latest.length) {
+            tbody.innerHTML = '<tr><td colspan="4">No hay pagos registrados</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        latest.forEach((payment) => {
+            const tr = document.createElement('tr');
+            appendCell(tr, payment.id_pago);
+            appendCell(tr, payment.usuario_id);
+            appendCell(tr, `${payment.monto ?? 0}€`);
+            appendCell(tr, payment.metodo);
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderDistribution(totalRecords) {
+        const list = document.getElementById('distribution-list');
+        if (!list) return;
+
+        list.innerHTML = '';
+        sections.forEach((section) => {
+            const count = (state[section.key] || []).length;
+            const width = totalRecords ? (count / totalRecords) * 100 : 0;
+            const row = document.createElement('div');
+            row.className = 'bar-row';
+            row.innerHTML = `
+                <span class="bar-name"></span>
+                <div class="bar-track"><div class="bar-fill"></div></div>
+                <span class="bar-val"></span>
+            `;
+            row.querySelector('.bar-name').textContent = section.title;
+            row.querySelector('.bar-fill').style.width = `${width}%`;
+            row.querySelector('.bar-val').textContent = count;
+            list.appendChild(row);
+        });
+    }
+
+    function appendCell(row, value) {
+        const cell = document.createElement('td');
+        cell.textContent = value ?? '';
+        row.appendChild(cell);
+    }
+
+    try {
+        await Promise.all(sections.map(async (section) => {
+            const card = document.querySelector(`[data-entity-card="${section.key}"]`);
+            const countEl = card && card.querySelector('[data-count]');
+            try {
+                const rows = normalizeList(await ApiService.get(section.key));
+                state[section.key] = rows;
+
+                if (countEl) countEl.textContent = `${rows.length} registros`;
+            } catch (err) {
+                if (err.message === 'Unauthorized') throw err;
+                state[section.key] = [];
+                if (countEl) countEl.textContent = 'Error';
+            }
+        }));
+
+        const totalRecords = sections.reduce((total, section) => total + (state[section.key] || []).length, 0);
+        const activeUsers = (state.usuarios || []).filter((row) => statusClass(row.estado) === 'activo').length;
+        const openIssues = (state.incidencias || []).filter((row) => statusClass(row.estado) === 'inactivo').length;
+        const totalRevenue = (state.pagos || []).reduce((total, row) => total + Number.parseFloat(row.monto || 0), 0);
+        const linkedEntities = Object.values(schema).filter((config) => {
+            return (config.fields || []).some((field) => field.endsWith('_id'));
+        }).length;
+
+        setText('kpi-total-records', totalRecords);
+        setText('kpi-active-users', activeUsers);
+        setText('kpi-open-issues', openIssues);
+        setText('kpi-total-revenue', Number.isFinite(totalRevenue) ? totalRevenue.toFixed(0) : '0');
+        setText('kpi-linked-entities', linkedEntities);
+        renderPayments(state.pagos || []);
+        renderDistribution(totalRecords);
+    } catch (err) {
+        const tbody = document.getElementById('latest-payments-body');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="4">${err.message || 'Error al cargar datos'}</td></tr>`;
+        const list = document.getElementById('distribution-list');
+        if (list) list.textContent = err.message || 'Error al cargar datos';
     }
 });
