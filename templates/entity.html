@@ -5,10 +5,10 @@
 {% block body %}
 <section class="sec-head">
     <div>
-        <div class="sec-count">{{ rows|length }} registros</div>
+        <div class="sec-count"><span id="entity-count">0</span> registros</div>
         <div class="sec-title">{{ config.title }}</div>
     </div>
-    <a class="btn-new" href="#formulario">{% if editing_record %}Editando registro{% else %}+ Nuevo registro{% endif %}</a>
+    <a class="btn-new" href="#formulario" id="new-record-link">+ Nuevo registro</a>
 </section>
 
 <section class="entity-summary">
@@ -30,12 +30,9 @@
                     <th>acciones</th>
                 </tr>
             </thead>
-            <tbody>
-                {# Rows are fetched from the backend API. Server-side rendering
-                   of `rows` is disabled while the frontend consumes the REST API.
-                   Client-side code should populate the table body dynamically. #}
+            <tbody id="entity-table-body">
                 <tr>
-                    <td colspan="{{ config.fields|length + 2 }}">Cargando registros desde API...</td>
+                    <td colspan="{{ config.fields|length + 2 }}">No hay registros</td>
                 </tr>
             </tbody>
         </table>
@@ -45,37 +42,43 @@
 <section class="two-col form-split" id="formulario">
     <div class="col-block">
         <div class="col-title">{{ config.accent }}</div>
-        <div class="form-copy-title">{% if editing_record %}Modificar registro{% else %}Nuevo registro{% endif %}</div>
-        <p class="form-copy-text">
-            {% if editing_record %}
-            Estas editando el registro {{ editing_record[config.id_field] }} de {{ config.title|lower }}.
-            {% else %}
-            Formulario para insertar datos en la entidad {{ config.title|lower }}.
-            {% endif %}
-        </p>
+        <div class="form-copy-title" id="form-title">Nuevo registro</div>
+        <p class="form-copy-text" id="form-copy">Formulario para insertar datos en la entidad {{ config.title|lower }}.</p>
+        
+        {% if config.examples %}
+        <div class="examples-wrap" style="margin-top: 2rem;">
+            <div class="col-title" style="font-size: 0.7rem; opacity: 0.6; margin-bottom: 0.5rem;">RELLENADO RÁPIDO (EJEMPLOS)</div>
+            <div class="examples-grid" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                {% for example in config.examples %}
+                <button class="btn-example" data-payload='{{ example|tojson }}' style="background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); padding: 0.5rem 0.8rem; border-radius: 4px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;">
+                    {% if example.nombre %}{{ example.nombre }}{% elif example.dia_semana %}{{ example.dia_semana }}{% elif example.descripcion %}{{ example.descripcion }}{% else %}Ejemplo {{ loop.index }}{% endif %}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
     <div class="col-block">
         <div class="col-title">Formulario</div>
 
-        <form
-            class="record-form"
-            action="{% if editing_record %}{{ url_for('update_record', entity=entity, record_id=editing_record[config.id_field]) }}{% else %}{{ url_for('add_record', entity=entity) }}{% endif %}"
-            method="post"
-        >
-                {% for field in config.fields %}
+        <form class="record-form" id="entity-form">
+            <input type="hidden" name="{{ config.id_field }}" value="">
+            {% for field in (config.form_fields if config.form_fields else config.fields) %}
             <label>
                 <span>{{ field }}</span>
-                {# Values are filled client-side when editing via the API #}
-                <input type="text" name="{{ field }}" value="" required>
+                <input
+                    type="{% if field in ['capacidad', 'monitor_id', 'sala_id', 'horario_id', 'aforo_maximo', 'usuario_id', 'actividad_id', 'empleado_id', 'material_id', 'monto'] %}number{% else %}text{% endif %}"
+                    name="{{ field }}"
+                    required
+                    {% if field == 'monto' %}step="0.01"{% endif %}
+                >
             </label>
             {% endfor %}
             <div class="form-actions">
                 <button type="submit" class="btn-new">
-                    {% if editing_record %}Guardar cambios{% else %}Guardar registro{% endif %}
+                    Guardar registro
                 </button>
-                {% if editing_record %}
-                <a class="btn-link" href="{{ url_for('entity_page', entity=entity) }}">Cancelar</a>
-                {% endif %}
+                <button type="button" class="btn-link" id="form-reset">Cancelar</button>
             </div>
         </form>
     </div>
@@ -83,6 +86,11 @@
 
 <footer class="foot">
     <span>{{ config.title }}</span>
-    <span>{{ rows|length }} total</span>
+    <span><span id="entity-footer-count">0</span> total</span>
 </footer>
+<script>
+window.MYSGYM_ENTITY = {{ entity|tojson }};
+window.MYSGYM_CONFIG = {{ config|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/entity.js') }}"></script>
 {% endblock %}

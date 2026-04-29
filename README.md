@@ -1,6 +1,6 @@
 # MYSGYM — Frontend (Flask + Jinja)
 
-Frontend ligero para la aplicación MYSGYM: una interfaz basada en Flask que sirve plantillas Jinja y recursos estáticos (CSS/JS). Está pensado como capa de presentación que puede trabajar con un backend REST separado o usar el modo mock-interno para desarrollo.
+Frontend ligero para la aplicación MYSGYM: una interfaz basada en Flask que sirve plantillas Jinja y recursos estáticos (CSS/JS). La persistencia y la autenticación viven en un backend REST separado.
 
 Última actualización: 28 de abril de 2026
 
@@ -10,11 +10,11 @@ Proveer una interfaz web para gestionar entidades del gimnasio (usuarios, emplea
 
 - Plantillas HTML con estructura base y zonas donde el cliente JS carga datos.
 - Servicios JavaScript para consumir una API (con soporte a JWT y modo mock para pruebas locales).
-- Un servidor Flask mínimo que sirve las plantillas y proporciona endpoints de prueba (dev) cuando se necesita.
+- Un servidor Flask mínimo que solo sirve las plantillas y los recursos estáticos.
 
 ## Tecnologías principales
 
-- Python + Flask (servidor que sirve las plantillas y algunos endpoints de prueba).
+- Python + Flask (servidor que sirve las plantillas).
 - HTML + Jinja2 (plantillas en `templates/`).
 - JavaScript (cliente en `static/js/`): `ApiService` (peticiones, autenticación), `dashboard.js` (lógica de listado/CRUD de ejemplo), `main.js` (comportamientos UI).
 - CSS en `static/css/styles.css`.
@@ -29,42 +29,59 @@ MYSGYM_FRONT/
 │   ├── css/styles.css
 │   └── js/
 │       ├── config.js     # API_BASE_URL, USE_MOCK_API
-│       ├── api.js        # ApiService (mock + fetch, JWT storage)
-│       ├── dashboard.js  # Lógica de listado/CRUD de ejemplo
+│       ├── api.js        # ApiService (fetch, JWT storage y mock opcional)
+│       ├── home.js       # Carga KPIs y resumen desde el backend
+│       ├── entity.js     # CRUD genérico de entidades desde el backend
+│       ├── dashboard.js  # Lógica de listado/CRUD de usuarios
 │       └── main.js       # Comportamientos UI comunes
 └── README.md
 ```
 
-## Cómo ejecutar (desarrollo)
+## Cómo hacer funcionar el proyecto (Paso a paso)
 
-1. Crear y activar un entorno virtual (recomendado):
+Sigue estos pasos exactos para configurar el entorno y arrancar la aplicación en un PC nuevo:
 
+### 1. Preparar el entorno virtual
+Crea un entorno de Python para aislar las librerías del sistema:
 ```bash
 python -m venv venv
-source venv/bin/activate
 ```
 
-2. Instalar Flask:
+### 2. Activar el entorno virtual
+- **En Linux/macOS:**
+  ```bash
+  source venv/bin/activate
+  ```
+- **En Windows (PowerShell):**
+  ```powershell
+  .\venv\Scripts\Activate.ps1
+  ```
 
+### 3. Instalar las dependencias
+Instala Flask, Pytest y el resto de librerías necesarias:
 ```bash
-pip install flask
+pip install -r requirements.txt
 ```
 
-3. Ejecutar la aplicación de desarrollo (sirve en el puerto 8080 por defecto):
+### 4. Configurar la conexión con el Backend (Opcional)
+Si tienes el backend corriendo en otra dirección, edita el archivo `static/js/config.js` y ajusta la variable `API_BASE_URL`.
 
+### 5. Ejecutar la aplicación
+Arranca el servidor de desarrollo:
 ```bash
 python app.py
 ```
 
-4. Abrir en el navegador: http://localhost:8080
+### 6. Acceder a la web
+Abre tu navegador y entra en: **[http://localhost:8080](http://localhost:8080)**
 
 ## Configuración importante
 
 - `static/js/config.js`:
-	- `API_BASE_URL`: URL base del backend. Por defecto `http://localhost:8080` (el mismo servidor Flask de este proyecto).
-	- `USE_MOCK_API`: si `true`, `ApiService` usa un mock en memoria para pruebas sin backend; poner `false` para realizar peticiones reales al `API_BASE_URL`.
+	- `API_BASE_URL`: URL base del backend separado. En desarrollo apunta a `http://127.0.0.1:8000`.
+	- `USE_MOCK_API`: si `true`, `ApiService` usa un mock en memoria para pruebas sin backend; por defecto está en `false` para usar el backend real.
 
-## Endpoints útiles (frontend + dev API)
+## Endpoints útiles
 
 - Páginas:
 	- `/` → `home` (plantilla `home.html`)
@@ -72,31 +89,46 @@ python app.py
 	- `/login` → formulario de acceso (`login.html`)
 	- `/seccion/<entity>` → vista genérica por entidad (`entity.html`)
 
-- API de prueba (dev):
-	- `POST /api/auth/login` → autenticación de desarrollo (dev tokens)
-	- `GET/POST /api/usuarios` y `GET/PUT/DELETE /api/usuarios/<id>` → ejemplo CRUD para `usuarios`
+- API esperada en el backend separado (`http://127.0.0.1:8000`):
+	- `POST /api/auth/login` → autenticación y token
+	- `GET/POST /api/<entity>` y `GET/PUT/DELETE /api/<entity>/<id>` → CRUD genérico para las entidades definidas en `app.py`
 
-El servidor `app.py` incluye una base de datos en memoria y endpoints simples para facilitar pruebas locales.
+El servidor `app.py` solo sirve páginas y archivos estáticos. Los datos vienen siempre del backend separado.
 
-## Credenciales de prueba
+## Credenciales
 
-- Usuario admin de ejemplo: `admin` / `admin` (dev)
-- Usuario empleado de ejemplo: `empleado` / `empleado` (dev)
-
-Además, cuando `USE_MOCK_API=true` el cliente contiene usuarios demo en memoria (ver `static/js/api.js`).
+Las credenciales válidas las decide el backend real en `POST /api/auth/login`.
 
 ## Uso básico del frontend
 
-1. Si quieres usar el backend incluido para pruebas: mantener `API_BASE_URL` en `http://localhost:8080` y `USE_MOCK_API=false`.
-2. Abrir `/login`, iniciar sesión con credenciales de prueba.
-3. Navegar al `/dashboard` para listar y gestionar usuarios (CRUD de ejemplo).
+1. Arrancar el backend real en `http://127.0.0.1:8000`.
+2. Abrir `/login`, iniciar sesión con credenciales del backend.
+3. Navegar al `/dashboard` o a `/seccion/<entity>` para listar y gestionar entidades.
 4. Para cambiar a un backend externo, actualizar `static/js/config.js` con la URL del API y poner `USE_MOCK_API = false`.
+
+## Pruebas (Tests)
+
+Este proyecto incluye una suite de pruebas automatizadas con `pytest` que verifican la integridad de las rutas, la estructura de la UI y la lógica del frontend.
+
+Para ejecutar los tests:
+
+1. Asegúrate de tener las dependencias instaladas:
+```bash
+pip install -r requirements.txt
+```
+
+2. Ejecuta todos los tests:
+```bash
+PYTHONPATH=. pytest tests/
+```
+
+La suite cubre:
+- Conectividad de todas las rutas y carga de recursos estáticos.
+- Integridad de tablas y formularios para todas las entidades del gimnasio.
+- Lógica de protección de rutas y filtrado por roles.
+- Generación dinámica de botones de "Rellenado Rápido".
 
 ## Notas y siguientes pasos sugeridos
 
-- Separar el backend real si se requiere persistencia en base de datos.
 - Extender `ApiService` con manejo de refresh tokens y control de errores más robusto.
-- Añadir tests E2E y scripts de despliegue cuando el backend esté disponible.
-
-
-
+- Integrar Playwright para pruebas E2E completas con interacción de navegador.

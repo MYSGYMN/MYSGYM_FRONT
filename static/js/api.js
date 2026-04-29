@@ -1,5 +1,19 @@
 // Usa `API_BASE_URL` definido en static/js/config.js (incluido en base.html antes de este archivo)
 class ApiService {
+    static endpointMap = {
+        authLogin: '/auth/login',
+        employeeLogin: '/auth/login-empleado',
+        usuarios: '/usuarios/',
+        empleados: '/empleados/',
+        salas: '/gym/salas',
+        horarios: '/gym/horarios',
+        actividades: '/gym/actividades',
+        reservas: '/reservas',
+        material: '/mantenimiento/materiales',
+        incidencias: '/mantenimiento/incidencias',
+        pagos: '/pagos',
+    };
+
     // --- Mock helpers (solo cuando USE_MOCK_API=true en config.js) ---
     static ensureMockDb() {
         if (window.__mockDb) return window.__mockDb;
@@ -80,6 +94,18 @@ class ApiService {
         return localStorage.getItem('user_role');
     }
 
+    static normalizedRole() {
+        return String(this.getRole() || '').trim().toLowerCase();
+    }
+
+    static isClient() {
+        return ['cliente', 'client', 'socio', 'usuario'].includes(this.normalizedRole());
+    }
+
+    static isStaff() {
+        return ['admin', 'monitor', 'empleado', 'recepcion', 'recepcionista'].includes(this.normalizedRole());
+    }
+
     static setRole(role) {
         if (role) localStorage.setItem('user_role', role);
         else localStorage.removeItem('user_role');
@@ -88,6 +114,16 @@ class ApiService {
     static setToken(token) {
         if (token) localStorage.setItem('access_token', token);
         else localStorage.removeItem('access_token');
+    }
+
+    static getJwtPayload(token) {
+        try {
+            const payload = token.split('.')[1];
+            const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+            return JSON.parse(atob(normalized));
+        } catch (e) {
+            return {};
+        }
     }
 
     static async request(endpoint, options = {}) {
@@ -112,7 +148,7 @@ class ApiService {
 
         const response = await fetch(url, config);
 
-        if (response.status === 401) {
+        if (response.status === 401 && !options.skipUnauthorizedRedirect) {
             // token invalid/expired — clear and redirect to login
             this.setToken(null);
             window.location.href = '/login';
@@ -134,19 +170,51 @@ class ApiService {
         return response.json();
     }
 
-    static get(entity) { return this.request(`/api/${entity}`); }
-    static getById(entity, id) { return this.request(`/api/${entity}/${id}`); }
-    static create(entity, data) { return this.request(`/api/${entity}`, { method: 'POST', body: data }); }
-    static update(entity, id, data) { return this.request(`/api/${entity}/${id}`, { method: 'PUT', body: data }); }
-    static delete(entity, id) { return this.request(`/api/${entity}/${id}`, { method: 'DELETE' }); }
+    static entityEndpoint(entity, id = null) {
+        const base = this.endpointMap[entity] || `/${entity}`;
+        if (id === null || typeof id === 'undefined' || id === '') return base;
+        return `${base.replace(/\/$/, '')}/${id}`;
+    }
+
+    static get(entity) { return this.request(this.entityEndpoint(entity)); }
+    static getById(entity, id) { return this.request(this.entityEndpoint(entity, id)); }
+    static create(entity, data) { return this.request(this.entityEndpoint(entity), { method: 'POST', body: data }); }
+    static update(entity, id, data) { return this.request(this.entityEndpoint(entity, id), { method: 'PUT', body: data }); }
+    static delete(entity, id) { return this.request(this.entityEndpoint(entity, id), { method: 'DELETE' }); }
 
     static async login(email, password) {
-        const data = await this.request('/api/auth/login', { method: 'POST', body: { email, password } });
-        if (data && data.access_token) this.setToken(data.access_token);
+        let data;
+        try {
+            data = await this.request(this.endpointMap.employeeLogin, {
+                method: 'POST',
+                body: { email, password },
+                skipUnauthorizedRedirect: true,
+            });
+        } catch (employeeError) {
+            if (!String(employeeError.message || '').includes('Credenciales inválidas')) {
+                throw employeeError;
+            }
+            data = await this.request(this.endpointMap.authLogin, {
+                method: 'POST',
+                body: { email, password },
+                skipUnauthorizedRedirect: true,
+            });
+        }
+        const token = data && (data.access_token || data.token || data.accessToken);
+        if (token) this.setToken(token);
         // If backend returns role or user.role, persist it for frontend logic
-        const role = data && (data.role || (data.user && data.user.role));
+        const tokenRole = token ? this.getJwtPayload(token).role : null;
+        const role = data && (data.role || (data.user && data.user.role) || tokenRole);
         if (role) this.setRole(role);
         return data;
+    }
+
+    static async registerUser(data) {
+        return this.request('/auth/register', {
+            method: 'POST',
+            body: data,
+            skipUnauthorizedRedirect: true,
+        });
     }
 
     static logout() { this.setToken(null); this.setRole(null); window.location.href = '/login'; }

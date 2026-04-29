@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnLogout) btnLogout.addEventListener('click', () => ApiService.logout());
 
-    btnNew.addEventListener('click', () => openModal());
+    if (btnNew) btnNew.addEventListener('click', () => openModal());
 
     document.getElementById('modal-cancel').addEventListener('click', closeModal);
 
@@ -42,24 +42,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function load() {
         // Decide qué panel mostrar según el role
-        const role = ApiService.getRole();
-        if (!role) {
-            // Si no hay `role`, intentar obtener el perfil (opcional)
-        }
-
-        // Si el role es 'client' mostramos el panel de cliente (solo lectura)
-        if (role && role.toLowerCase() === 'client') {
+        if (ApiService.isClient()) {
             if (clientPanel) clientPanel.style.display = '';
             if (tbody) tbody.closest('section').style.display = 'none';
             // ocultar botón nuevo para clientes
             if (btnNew) btnNew.style.display = 'none';
             clientTbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
             try {
-                const items = await ApiService.get('usuarios');
-                renderClient(items);
+                const profile = await ApiService.request('/usuarios/perfil');
+                renderClient(profile ? [profile] : []);
             } catch (err) {
                 clientTbody.innerHTML = `<tr><td colspan="4">${err.message}</td></tr>`;
             }
+            return;
+        }
+
+        if (!ApiService.isStaff()) {
+            if (btnNew) btnNew.style.display = 'none';
+            tbody.innerHTML = '<tr><td colspan="7">Tu cuenta no tiene permisos para administrar socios.</td></tr>';
             return;
         }
 
@@ -85,12 +85,10 @@ document.addEventListener('DOMContentLoaded', () => {
         items.forEach((it) => {
             // mostrar solo información básica para clientes
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${it.id_usuario ?? ''}</td>
-                <td>${it.nombre ?? ''}</td>
-                <td>${it.email ?? ''}</td>
-                <td>${it.telefono ?? ''}</td>
-            `;
+            appendCell(tr, it.id_usuario);
+            appendCell(tr, it.nombre);
+            appendCell(tr, it.email);
+            appendCell(tr, it.telefono);
             clientTbody.appendChild(tr);
         });
     }
@@ -103,18 +101,24 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.innerHTML = '';
         items.forEach((it) => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${it.id_usuario ?? ''}</td>
-                <td>${it.nombre ?? ''}</td>
-                <td>${it.email ?? ''}</td>
-                <td>${it.telefono ?? ''}</td>
-                <td>${it.fecha_registro ?? ''}</td>
-                <td>${it.estado ?? ''}</td>
-                <td>
-                    <button class="btn-link btn-edit" data-id="${it.id_usuario}">Editar</button>
-                    <button class="btn-link btn-delete" data-id="${it.id_usuario}">Borrar</button>
-                </td>
-            `;
+            appendCell(tr, it.id_usuario);
+            appendCell(tr, it.nombre);
+            appendCell(tr, it.email);
+            appendCell(tr, it.telefono);
+            appendCell(tr, it.fecha_registro);
+            appendCell(tr, it.estado);
+
+            const actions = document.createElement('td');
+            const editButton = document.createElement('button');
+            editButton.className = 'btn-link btn-edit';
+            editButton.dataset.id = it.id_usuario;
+            editButton.textContent = 'Editar';
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'btn-link btn-delete';
+            deleteButton.dataset.id = it.id_usuario;
+            deleteButton.textContent = 'Borrar';
+            actions.append(editButton, deleteButton);
+            tr.appendChild(actions);
             tbody.appendChild(tr);
         });
 
@@ -159,6 +163,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeModal() {
         modal.style.display = 'none';
+    }
+
+    function appendCell(row, value) {
+        const cell = document.createElement('td');
+        cell.textContent = value ?? '';
+        row.appendChild(cell);
     }
 
     // inicializar

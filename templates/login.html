@@ -5,12 +5,16 @@
 {% block body %}
 <div class="auth-center">
     <div class="auth-card">
-        <h2>Acceso</h2>
-        <p>Introduce tus credenciales para acceder al panel de administración.</p>
+        <div class="auth-tabs" role="tablist" aria-label="Acceso">
+            <button type="button" class="auth-tab active" id="show-login">Acceso</button>
+            <button type="button" class="auth-tab" id="show-register">Registro</button>
+        </div>
+        <h2 id="auth-title">Acceso</h2>
+        <p id="auth-copy">Introduce tus credenciales para acceder al panel.</p>
         <form id="login-form" class="record-form">
             <label>
                 <span>Email</span>
-                <input type="email" name="email" required>
+                <input type="text" name="email" autocomplete="username" required>
             </label>
             <label>
                 <span>Contraseña</span>
@@ -20,24 +24,94 @@
                 <button type="submit" class="btn-new">Entrar</button>
             </div>
         </form>
-        <div id="login-error" class="form-error" style="display:none;color:#c00;margin-top:8px"></div>
+        <form id="register-form" class="record-form" style="display:none;">
+            <label>
+                <span>Nombre</span>
+                <input type="text" name="nombre" autocomplete="name" required>
+            </label>
+            <label>
+                <span>Email</span>
+                <input type="email" name="email" autocomplete="email" required>
+            </label>
+            <label>
+                <span>Telefono</span>
+                <input type="text" name="telefono" autocomplete="tel">
+            </label>
+            <label>
+                <span>Contraseña</span>
+                <input type="password" name="password" autocomplete="new-password" required>
+            </label>
+            <div class="form-actions">
+                <button type="submit" class="btn-new">Crear cuenta</button>
+            </div>
+        </form>
+        <div id="auth-message" class="form-error" style="display:none;"></div>
     </div>
 </div>
 
 <script>
-document.getElementById('login-form').addEventListener('submit', async (e) => {
+const loginForm = document.getElementById('login-form');
+const registerForm = document.getElementById('register-form');
+const showLogin = document.getElementById('show-login');
+const showRegister = document.getElementById('show-register');
+const title = document.getElementById('auth-title');
+const copy = document.getElementById('auth-copy');
+const message = document.getElementById('auth-message');
+
+function setMode(mode) {
+    const isRegister = mode === 'register';
+    loginForm.style.display = isRegister ? 'none' : '';
+    registerForm.style.display = isRegister ? '' : 'none';
+    showLogin.classList.toggle('active', !isRegister);
+    showRegister.classList.toggle('active', isRegister);
+    title.textContent = isRegister ? 'Registro' : 'Acceso';
+    copy.textContent = isRegister
+        ? 'Crea una cuenta de cliente para acceder a MYSGYM.'
+        : 'Introduce tus credenciales para acceder al panel.';
+    message.style.display = 'none';
+}
+
+function showMessage(text, type = 'error') {
+    message.textContent = text;
+    message.className = `form-error ${type === 'success' ? 'success' : ''}`;
+    message.style.display = 'block';
+}
+
+showLogin.addEventListener('click', () => setMode('login'));
+showRegister.addEventListener('click', () => setMode('register'));
+
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target;
     const email = form.email.value.trim();
     const password = form.password.value;
-    const errEl = document.getElementById('login-error');
-    errEl.style.display = 'none';
+    message.style.display = 'none';
     try {
         await ApiService.login(email, password);
         window.location.href = '/dashboard';
     } catch (err) {
-        errEl.textContent = err.message || 'Error al iniciar sesión';
-        errEl.style.display = 'block';
+        showMessage(err.message || 'Error al iniciar sesión');
+    }
+});
+
+registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    message.style.display = 'none';
+    try {
+        const email = form.email.value.trim();
+        await ApiService.registerUser({
+            nombre: form.nombre.value.trim(),
+            email,
+            telefono: form.telefono.value.trim(),
+            password: form.password.value,
+        });
+        form.reset();
+        setMode('login');
+        loginForm.email.value = email;
+        showMessage('Cuenta creada. Ya puedes iniciar sesión.', 'success');
+    } catch (err) {
+        showMessage(err.message || 'Error al registrar la cuenta');
     }
 });
 </script>
