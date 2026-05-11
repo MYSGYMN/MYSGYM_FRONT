@@ -1,8 +1,8 @@
 # MYSGYM — Frontend (Flask + Jinja)
 
-Frontend ligero para la aplicación MYSGYM: una interfaz basada en Flask que sirve plantillas Jinja y recursos estáticos (CSS/JS). La persistencia y la autenticación viven en un backend REST separado.
+Frontend ligero para la aplicación MYSGYM: una interfaz basada en Flask que sirve plantillas Jinja y recursos estáticos (CSS/JS). La persistencia y la autenticación viven en un backend REST ya desplegado en Render.
 
-Última actualización: 28 de abril de 2026
+Última actualización: 11 de mayo de 2026
 
 ## Propósito
 
@@ -11,6 +11,10 @@ Proveer una interfaz web para gestionar entidades del gimnasio (usuarios, emplea
 - Plantillas HTML con estructura base y zonas donde el cliente JS carga datos.
 - Servicios JavaScript para consumir una API (con soporte a JWT y modo mock para pruebas locales).
 - Un servidor Flask mínimo que solo sirve las plantillas y los recursos estáticos.
+
+Arquitectura objetivo en despliegue:
+
+Frontend Flask en Render -> Backend API en https://backend-mysgym.onrender.com -> Base de datos gestionada
 
 ## Tecnologías principales
 
@@ -63,8 +67,14 @@ Instala Flask, Pytest y el resto de librerías necesarias:
 pip install -r requirements.txt
 ```
 
-### 4. Configurar la conexión con el Backend (Opcional)
-Si tienes el backend corriendo en otra dirección, edita el archivo `static/js/config.js` y ajusta la variable `API_BASE_URL`.
+### 4. Configurar la conexión con el Backend
+El frontend ya está preparado para consumir el backend publicado en Render.
+
+URL base del backend:
+
+```bash
+https://backend-mysgym.onrender.com
+```
 
 ### 5. Ejecutar la aplicación
 Arranca el servidor de desarrollo:
@@ -78,8 +88,14 @@ Abre tu navegador y entra en: **[http://localhost:8080](http://localhost:8080)**
 ## Configuración importante
 
 - `static/js/config.js`:
-	- `API_BASE_URL`: URL base del backend separado. En desarrollo apunta a `http://127.0.0.1:8000`.
-	- `USE_MOCK_API`: si `true`, `ApiService` usa un mock en memoria para pruebas sin backend; por defecto está en `false` para usar el backend real.
+	- `API_BASE_URL`: URL base del backend separado. En local apunta a `http://127.0.0.1:8000`; en Render apunta a `https://backend-mysgym.onrender.com`.
+	- `USE_MOCK_API`: si `true`, `ApiService` usa un mock en memoria para pruebas sin backend; por defecto queda desactivado.
+
+- Variables de entorno para Render:
+	- `API_BASE_URL=https://backend-mysgym.onrender.com`
+	- `USE_MOCK_API=false`
+	- `FLASK_DEBUG=0`
+	- `SECRET_KEY=<valor-seguro>`
 
 ## Endpoints útiles
 
@@ -89,11 +105,24 @@ Abre tu navegador y entra en: **[http://localhost:8080](http://localhost:8080)**
 	- `/login` → formulario de acceso (`login.html`)
 	- `/seccion/<entity>` → vista genérica por entidad (`entity.html`)
 
-- API esperada en el backend separado (`http://127.0.0.1:8000`):
+
+- API esperada en el backend separado (`https://backend-mysgym.onrender.com`):
 	- `POST /api/auth/login` → autenticación y token
 	- `GET/POST /api/<entity>` y `GET/PUT/DELETE /api/<entity>/<id>` → CRUD genérico para las entidades definidas en `app.py`
 
 El servidor `app.py` solo sirve páginas y archivos estáticos. Los datos vienen siempre del backend separado.
+
+## Despliegue en Render
+
+Este frontend se publica como un Web Service de Render.
+
+Configuración sugerida:
+
+- Build command: `pip install -r requirements.txt`
+- Start command: `python app.py`
+- Environment variables: `API_BASE_URL`, `FLASK_DEBUG`, `SECRET_KEY`
+
+Con esa configuración, Render inyecta `PORT` automáticamente y Flask escucha en ese puerto.
 
 ## Credenciales
 
@@ -101,10 +130,10 @@ Las credenciales válidas las decide el backend real en `POST /api/auth/login`.
 
 ## Uso básico del frontend
 
-1. Arrancar el backend real en `http://127.0.0.1:8000`.
+1. El backend ya está desplegado en `https://backend-mysgym.onrender.com`.
 2. Abrir `/login`, iniciar sesión con credenciales del backend.
 3. Navegar al `/dashboard` o a `/seccion/<entity>` para listar y gestionar entidades.
-4. Para cambiar a un backend externo, actualizar `static/js/config.js` con la URL del API y poner `USE_MOCK_API = false`.
+4. Para cambiar a un backend externo, actualizar `API_BASE_URL` o la variable de entorno correspondiente y dejar `USE_MOCK_API` desactivado.
 
 ## Pruebas (Tests)
 

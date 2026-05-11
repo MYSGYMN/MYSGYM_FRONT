@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: mysgym-frontend
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    autoDeploy: true
+    envVars:
+      - key: API_BASE_URL
+        value: https://backend-mysgym.onrender.com
+      - key: USE_MOCK_API
+        value: "false"
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: SECRET_KEY
+        generateValue: true

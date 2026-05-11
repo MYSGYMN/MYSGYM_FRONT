@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script>
-        window.MYSGYM_CONFIG = {{ frontend_runtime_config | tojson }};
+        window.MYSGYM_CONFIG = window.MYSGYM_CONFIG || {};
     </script>
     <script src="{{ url_for('static', filename='js/config.js') }}?v=20260423"></script>
     <script src="{{ url_for('static', filename='js/api.js') }}?v=20260423"></script>
